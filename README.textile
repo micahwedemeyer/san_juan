@@ -19,7 +19,7 @@ gem install jnewland-san_juan -s http://gems.github.com
 
 h2. Usage
 
-In your Capistrano deploy recipie:
+In your Capistrano deploy recipe:
 
 <pre>
 <code>
@@ -124,6 +124,51 @@ role :web, 'bar.example.com'
 san_juan.role :app, %w(mongrels memcached)
 san_juan.role :web, %w(nginx)
 
+</code>
+</pre>
+
+h2. Role Specific God Configurations
+
+If you have separate god configurations for different roles, it is possible to segment your
+god configuration files. Your god files must be named @#{role}.god@ and be placed in the
+@#{current_path}/config/god@ directory, like so:
+
+<pre>
+#{current_path}/config/god/app.god
+#{current_path}/config/god/web.god
+#{current_path}/config/god/db.god
+</pre>
+
+san_juan will load the correct god configuration for each role.
+
+*Note*: This will only work if you do not explicitly set @god_config_path@.
+
+If you have some god configuration items that are universal and some that are role-specific,
+try combining common items into a separate configuration file and use @God.load@.
+
+<pre>
+<code>
+# /config/god/all.god
+# Some common configuration here, like email notification settings
+RAILS_ROOT = File.dirname(File.dirname(File.dirname(__FILE__)))
+
+God::Contacts::Email.message_settings = {
+  :from => "god@mydomain.com"
+}
+God::Contacts::Email.delivery_method = :sendmail
+
+</code>
+</pre>
+
+<pre>
+<code>
+# /config/god/app.god
+God.load(File.join(File.dirname(__FILE__), "all.god"))
+
+# Some specific configuration for only the app servers here...
+
+# Can use everything from all.god
+some_path = #{RAILS_ROOT}/some/path/here
 </code>
 </pre>
 
